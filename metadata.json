@@ -1,0 +1,8 @@
+
+{
+  "name": "Along",
+  "description": "An application to find public transport directions in Abuja and Lagos using your starting point and destination. Powered by Google AI.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
