@@ -1,4 +1,3 @@
-
 import { NigerianState, Coordinates } from '@/types';
 
 export const getTransitRoute = async (

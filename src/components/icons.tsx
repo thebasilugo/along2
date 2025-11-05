@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 // New Swap icon, more common for this action

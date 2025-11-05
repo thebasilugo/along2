@@ -1,4 +1,3 @@
-
 export enum NigerianState {
   ABUJA = 'Abuja',
   LAGOS = 'Lagos',

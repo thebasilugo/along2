@@ -1,4 +1,3 @@
-
 import { NigerianState } from './types';
 
 export const SUPPORTED_STATES: NigerianState[] = [

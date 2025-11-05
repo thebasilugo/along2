@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from 'next/server';
 import type { NigerianState, Coordinates } from '@/types';

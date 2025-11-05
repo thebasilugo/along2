@@ -1,4 +1,3 @@
-
 {
   "name": "along-app",
   "version": "0.1.0",
@@ -10,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@google/genai": "^0.1.0",
+    "@google/genai": "^1.0.0",
     "next": "14.2.3",
     "react": "^18",
     "react-dom": "^18"
