@@ -117,7 +117,7 @@ const App: React.FC = () => {
 
               <button
                 onClick={handleSwapLocations}
-                className="mt-7 p-3 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition disabled:opacity-50"
+                className="mt-7 p-3 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition-transform active:translate-y-px active:opacity-90 disabled:opacity-50"
                 aria-label="Swap origin and destination"
                 disabled={origin === 'My Current Location'}
               >
@@ -144,7 +144,7 @@ const App: React.FC = () => {
 
             <button
                 onClick={handleUseCurrentLocation}
-                className="w-full flex items-center justify-center space-x-2 text-sm text-blue-600 hover:text-blue-800 font-semibold transition py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center space-x-2 text-sm text-blue-600 hover:underline font-semibold transition-opacity active:opacity-75 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 <LocationMarkerIcon className="h-5 w-5" />
                 <span>Use Current Location</span>
@@ -155,11 +155,11 @@ const App: React.FC = () => {
             <button
               onClick={handleSearch}
               disabled={loading}
-              className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform active:translate-y-px active:opacity-95 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="http://www.w3.org/2000/svg">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
