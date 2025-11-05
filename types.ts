@@ -1,12 +1,13 @@
 
-export interface Coordinates {
-  latitude: number;
-  longitude: number;
+export enum NigerianState {
+  ABUJA = 'Abuja',
+  LAGOS = 'Lagos',
+  PORT_HARCOURT = 'Port Harcourt',
+  OGUN = 'Ogun',
+  ABEOKUTA = 'Abeokuta',
 }
 
-export interface GroundingChunk {
-  maps?: {
-    uri: string;
-    title: string;
-  };
+export interface Coordinates {
+    latitude: number;
+    longitude: number;
 }

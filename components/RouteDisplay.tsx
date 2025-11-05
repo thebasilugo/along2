@@ -1,63 +1,50 @@
+
 import React from 'react';
-
-// SVG icons for different transport modes
-const WalkIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-  </svg>
-);
-
-const BusIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path d="M12 18.35A6.35 6.35 0 0018.35 12 6.35 6.35 0 0012 5.65 6.35 6.35 0 005.65 12 6.35 6.35 0 0012 18.35z" />
-    <path d="M12 2v2m0 16v2m-8-9H2m8-8V2m8 8h2m-2 8l-2-2" />
-  </svg>
-);
-
-const DestinationIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-);
-
-
-const getIconForStep = (step: string) => {
-    const lowerCaseStep = step.toLowerCase();
-    if (lowerCaseStep.includes('walk') || lowerCaseStep.includes('cross')) {
-        return <WalkIcon />;
-    }
-    if (lowerCaseStep.includes('bus') || lowerCaseStep.includes('board') || lowerCaseStep.includes('take a') || lowerCaseStep.includes('keke')) {
-        return <BusIcon />;
-    }
-    if (lowerCaseStep.includes('arrive') || lowerCaseStep.includes('destination')) {
-        return <DestinationIcon />;
-    }
-    return <BusIcon />; // Default icon
-};
+import { BusIcon, WalkIcon, MotorcycleIcon } from './icons';
 
 interface RouteDisplayProps {
   route: string;
 }
 
+const getIconForStep = (step: string): React.ReactElement => {
+    const lowerCaseStep = step.toLowerCase();
+    if (lowerCaseStep.includes('bus') || lowerCaseStep.includes('brt') || lowerCaseStep.includes('danfo')) {
+        return <BusIcon className="h-8 w-8 text-blue-500" />;
+    }
+    if (lowerCaseStep.includes('walk')) {
+        return <WalkIcon className="h-8 w-8 text-green-500" />;
+    }
+    if (lowerCaseStep.includes('keke') || lowerCaseStep.includes('tricycle') || lowerCaseStep.includes('okada')) {
+        return <MotorcycleIcon className="h-8 w-8 text-yellow-500" />;
+    }
+    return <BusIcon className="h-8 w-8 text-gray-400" />;
+};
+
 const RouteDisplay: React.FC<RouteDisplayProps> = ({ route }) => {
-  const steps = route.split('\n').filter(line => line.match(/^\d+\.\s/));
+  const steps = route.split('\n').filter(step => step.trim() !== '' && /^\d+\./.test(step.trim()));
+
+  if (steps.length === 0) {
+    return (
+        <div className="mt-6 text-center text-gray-600 bg-gray-50 p-6 rounded-lg">
+            <p className="font-semibold">No valid route found.</p>
+            <p className="text-sm">Please try a different origin or destination.</p>
+        </div>
+    );
+  }
 
   return (
-    <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-      <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Your Route</h2>
-      <div className="space-y-4">
+    <div className="mt-8 space-y-4">
+      <h3 className="text-xl font-bold text-gray-800">Your Route</h3>
+      <ul className="space-y-4">
         {steps.map((step, index) => (
-          <div key={index} className="flex items-start p-4 bg-gray-100 dark:bg-gray-800/50 rounded-lg shadow-sm">
-            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-500 dark:bg-indigo-600 text-white flex items-center justify-center mr-4">
+          <li key={index} className="flex items-start space-x-4 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="flex-shrink-0 pt-1">
               {getIconForStep(step)}
             </div>
-            <p className="text-gray-700 dark:text-gray-300 self-center">
-              {step.substring(step.indexOf(' ') + 1)}
-            </p>
-          </div>
+            <p className="text-gray-700 leading-relaxed">{step.replace(/^\d+\.\s*/, '')}</p>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 };

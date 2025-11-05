@@ -1,50 +1,46 @@
 import { GoogleGenAI } from "@google/genai";
+import { NigerianState, Coordinates } from '../types';
 
-const apiKey = process.env.API_KEY;
-if (!apiKey) {
-  throw new Error("API_KEY environment variable not set.");
-}
-const ai = new GoogleGenAI({ apiKey });
+// The GoogleGenAI instance is initialized assuming the API_KEY is present in the environment.
+// The SDK will handle errors if the key is missing or invalid upon making an API call.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
-export const getTransitRoute = async (start: string, destination: string, city: 'Abuja' | 'Lagos'): Promise<string> => {
-  try {
+export const getTransitRoute = async (
+    origin: string,
+    destination: string,
+    state: NigerianState,
+    currentLocation: Coordinates | null
+): Promise<string> => {
+    
+    let originText = origin;
+    if (origin === "My Current Location" && currentLocation) {
+        originText = `my current location at coordinates ${currentLocation.latitude}, ${currentLocation.longitude}`;
+    }
+
     const prompt = `
-      You are an expert public transportation guide for ${city}, Nigeria. 
-      Your task is to provide an extremely concise, simplified, step-by-step public transport route.
+        You are a local transport expert for Nigeria.
+        Provide a detailed, step-by-step public transportation route from ${originText} to "${destination}" in ${state}, Nigeria.
+        Your response should be concise and easy to follow.
+        Assume the user is looking for common local transport options like danfo buses, BRT, keke napep (tricycles), or okada (motorcycle taxis) where applicable.
+        Format the output as a clear, numbered list. For each step, describe the action, the mode of transport, and an estimated time or key landmark. Do not use markdown formatting like bold or italics.
 
-      Start: "${start}"
-      Destination: "${destination}"
-
-      Follow these strict instructions for the response format:
-      1.  Provide the route as a short, numbered list of simple actions (maximum 4-5 steps).
-      2.  Each step must be a single, clear instruction.
-      3.  Start with an action verb (e.g., "Walk", "Take", "Board", "Alight").
-      4.  Mention the mode of transport (e.g., Keke, Bus, Danfo) and key locations/landmarks.
-      5.  Do not add any extra explanations, summaries, cost estimates, or pleasantries.
-      6.  The entire response should only be the numbered list.
-
-      Example response format for ${city}:
-      ${city === 'Abuja' 
-        ? `1. Walk to the bus stop at Wuse Market main gate.
-           2. Board a bus heading towards Berger.
-           3. Alight at Jabi Lake Mall junction.
-           4. You have arrived at your destination.`
-        : `1. Walk to CMS Bus Stop.
-           2. Board a Danfo bus going to Ikeja.
-           3. Alight at Ikeja Along bus stop.
-           4. Take a Keke to Ikeja City Mall.`
-      }
+        Example format:
+        1. Walk to the nearest bus stop at Berger. (Approx. 5 mins)
+        2. Take a danfo bus heading towards Ikeja. (Approx. 20 mins)
+        3. Alight at Ikeja Along and take a keke napep to your final destination. (Approx. 10 mins)
     `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
-    
-    return response.text.trim();
-
-  } catch (error) {
-    console.error("Error fetching transit route from Gemini:", error);
-    throw new Error("Failed to generate transit route. Please try again.");
-  }
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+        return response.text;
+    } catch (error) {
+        console.error("Error fetching route from Gemini API:", error);
+         if (error instanceof Error && error.message.includes('API key not valid')) {
+             throw new Error("Your API Key is invalid or missing. Please check your environment variables.");
+        }
+        throw new Error("Failed to fetch route. The service may be unavailable or there was a network issue.");
+    }
 };

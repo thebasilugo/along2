@@ -1,215 +1,188 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { NigerianState, Coordinates } from './types';
+import { SUPPORTED_STATES } from './constants';
 import { getTransitRoute } from './services/geminiService';
-import LocationInput from './components/LocationInput';
+import { ArrowsUpDownIcon, LocationMarkerIcon } from './components/icons';
 import RouteDisplay from './components/RouteDisplay';
-import LoadingSpinner from './components/LoadingSpinner';
-import SearchHistory, { HistoryItem } from './components/SearchHistory';
-
-type City = 'Abuja' | 'Lagos';
 
 const App: React.FC = () => {
-  const [startLocation, setStartLocation] = useState<string>('');
-  const [destination, setDestination] = useState<string>('');
-  const [route, setRoute] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedState, setSelectedState] = useState<NigerianState>(NigerianState.LAGOS);
+  const [origin, setOrigin] = useState('');
+  const [destination, setDestination] = useState('');
+  const [currentLocation, setCurrentLocation] = useState<Coordinates | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchHistory, setSearchHistory] = useState<HistoryItem[]>([]);
-  const [showHistory, setShowHistory] = useState<boolean>(false);
-  const [city, setCity] = useState<City>('Abuja');
+  const [route, setRoute] = useState<string | null>(null);
 
-  const placeholders = {
-    Abuja: {
-      start: "e.g., Wuse Market",
-      destination: "e.g., Jabi Lake Mall"
-    },
-    Lagos: {
-      start: "e.g., CMS Bus Stop",
-      destination: "e.g., Ikeja City Mall"
-    }
+  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedState(e.target.value as NigerianState);
+    setRoute(null);
+    setError(null);
   };
 
-  // Load history from localStorage on initial render
-  useEffect(() => {
-    try {
-      const storedHistory = localStorage.getItem('along-search-history');
-      if (storedHistory) {
-        setSearchHistory(JSON.parse(storedHistory));
-      }
-    } catch (e) {
-      console.error("Failed to parse search history from localStorage", e);
-    }
-  }, []);
-
-  const updateSearchHistory = (start: string, dest: string) => {
-    const updatedHistory = [...searchHistory];
-    const existingIndex = updatedHistory.findIndex(
-      item => item.start.toLowerCase() === start.toLowerCase() && item.destination.toLowerCase() === dest.toLowerCase()
-    );
-
-    if (existingIndex > -1) {
-      updatedHistory[existingIndex].count += 1;
-    } else {
-      updatedHistory.push({ start, destination: dest, count: 1 });
-    }
-    
-    setSearchHistory(updatedHistory);
-    localStorage.setItem('along-search-history', JSON.stringify(updatedHistory));
+  const handleSwapLocations = () => {
+    if (origin === 'My Current Location') return;
+    setOrigin(destination);
+    setDestination(origin);
   };
-
 
   const handleUseCurrentLocation = useCallback(() => {
     if (navigator.geolocation) {
-      setIsLoading(true);
-      setError(null);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setStartLocation(`Current Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
-          setIsLoading(false);
+          setCurrentLocation({ latitude, longitude });
+          setOrigin('My Current Location');
+           setError(null);
         },
-        (err) => {
-          setError(`Error getting location: ${err.message}`);
-          setIsLoading(false);
+        () => {
+          setError('Unable to retrieve your location. Please enable location services.');
         }
       );
     } else {
-      setError('Geolocation is not supported by this browser.');
+      setError('Geolocation is not supported by your browser.');
     }
   }, []);
 
-  const handleSearch = async (start: string = startLocation, dest: string = destination) => {
-    if (!start || !dest) {
-      setError('Please enter both a starting point and a destination.');
+  const handleSearch = async () => {
+    if (!origin || !destination) {
+      setError('Please enter both an origin and a destination.');
       return;
     }
-
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
     setRoute(null);
-
     try {
-      const generatedRoute = await getTransitRoute(start, dest, city);
-      setRoute(generatedRoute);
-      updateSearchHistory(start, dest);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+      const result = await getTransitRoute(origin, destination, selectedState, currentLocation);
+      setRoute(result);
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
   
-  const handleHistorySelect = (item: HistoryItem) => {
-    setStartLocation(item.start);
-    setDestination(item.destination);
-    setShowHistory(false);
-    // Note: This doesn't know the city from history, searches in current city context.
-    // This could be a future improvement if history items store the city.
-    handleSearch(item.start, item.destination);
-  };
-
-  const handleCityChange = (newCity: City) => {
-    setCity(newCity);
-    // Clear inputs and route when city changes for clarity
-    setStartLocation('');
-    setDestination('');
-    setRoute(null);
-    setError(null);
-  };
+  // Auto-detect location on first load for better UX
+  useEffect(() => {
+    handleUseCurrentLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col items-center p-4 sm:p-6 lg:p-8 font-sans">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-sans">
       <div className="w-full max-w-2xl mx-auto">
-        <header className="text-center mb-6">
-            <div className="flex justify-between items-center w-full">
-                <div className="w-12"></div> {/* Spacer */}
-                <h1 className="text-5xl sm:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">
-                    Along
-                </h1>
-                <button 
-                    onClick={() => setShowHistory(true)} 
-                    className="p-3 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                    aria-label="View search history"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </button>
-            </div>
-          <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
-            Simple public transport routes for {city}.
-          </p>
+        <header className="text-center mb-8">
+          <h1 className="text-5xl font-bold text-gray-800 tracking-tight">Along</h1>
+          <p className="text-lg text-gray-600 mt-2">Move smart. Move easily.</p>
         </header>
 
-        <div className="mb-6 flex justify-center p-1 bg-gray-200 dark:bg-gray-700 rounded-lg">
-          {(['Abuja', 'Lagos'] as City[]).map((c) => (
-            <button
-              key={c}
-              onClick={() => handleCityChange(c)}
-              className={`w-full font-semibold py-2 px-4 rounded-md transition-colors duration-300 ${
-                city === c
-                  ? 'bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 shadow'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-300/50 dark:hover:bg-gray-600/50'
-              }`}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
+        <main className="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+                Select your state
+              </label>
+              <select
+                id="state"
+                value={selectedState}
+                onChange={handleStateChange}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              >
+                {SUPPORTED_STATES.map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <main className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8">
-          <div className="space-y-6">
-            <LocationInput
-              id="start-location"
-              label="Starting Point"
-              value={startLocation}
-              onChange={(e) => setStartLocation(e.target.value)}
-              placeholder={placeholders[city].start}
-              onUseCurrentLocation={handleUseCurrentLocation}
-            />
-            <LocationInput
-              id="destination"
-              label="Destination"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              placeholder={placeholders[city].destination}
-            />
+            <div className="flex items-center space-x-2">
+              <div className="relative flex-grow">
+                 <label htmlFor="origin" className="block text-sm font-medium text-gray-700 mb-1">
+                    Origin
+                </label>
+                <input
+                  id="origin"
+                  type="text"
+                  value={origin}
+                  onChange={(e) => setOrigin(e.target.value)}
+                  placeholder="Starting point"
+                  className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  disabled={origin === 'My Current Location'}
+                />
+                 <div className="absolute inset-y-0 left-0 top-6 pl-3 flex items-center pointer-events-none">
+                    <div className="h-5 w-5 border-2 border-blue-500 rounded-full"></div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleSwapLocations}
+                className="mt-7 p-3 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition disabled:opacity-50"
+                aria-label="Swap origin and destination"
+                disabled={origin === 'My Current Location'}
+              >
+                <ArrowsUpDownIcon className="h-5 w-5" />
+              </button>
+
+              <div className="relative flex-grow">
+                 <label htmlFor="destination" className="block text-sm font-medium text-gray-700 mb-1">
+                    Destination
+                </label>
+                <input
+                  id="destination"
+                  type="text"
+                  value={destination}
+                  onChange={(e) => setDestination(e.target.value)}
+                  placeholder="Ending point"
+                  className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                />
+                 <div className="absolute inset-y-0 left-0 top-6 pl-3 flex items-center pointer-events-none">
+                     <LocationMarkerIcon className="h-5 w-5 text-red-500"/>
+                </div>
+              </div>
+            </div>
+
+            <button
+                onClick={handleUseCurrentLocation}
+                className="w-full flex items-center justify-center space-x-2 text-sm text-blue-600 hover:text-blue-800 font-semibold transition py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                <LocationMarkerIcon className="h-5 w-5" />
+                <span>Use Current Location</span>
+            </button>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-6">
             <button
-              onClick={() => handleSearch()}
-              disabled={isLoading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 dark:disabled:bg-indigo-800 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-indigo-300 dark:focus:ring-indigo-800 flex items-center justify-center shadow-lg hover:shadow-indigo-500/50"
+              onClick={handleSearch}
+              disabled={loading}
+              className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {isLoading ? (
-                <>
-                  <LoadingSpinner />
-                  <span className="ml-2">Finding Route...</span>
-                </>
-              ) : (
-                'Find Route'
-              )}
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Searching...
+                </div>
+              ) : 'Search Route'}
             </button>
           </div>
-          
+
           {error && (
-            <div className="mt-6 bg-red-100 dark:bg-red-900/50 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded-md" role="alert">
-              <p className="font-bold">Oops!</p>
+            <div className="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
               <p>{error}</p>
             </div>
           )}
+          
+          {route && (
+            <div className="mt-8">
+              <RouteDisplay route={route} />
+            </div>
+           )}
 
-          {route && <RouteDisplay route={route} />}
         </main>
-        
-        <footer className="text-center mt-8 text-sm text-gray-500 dark:text-gray-400">
-          <p>Powered by Gemini. Route information is AI-generated and for guidance only.</p>
-        </footer>
       </div>
-      <SearchHistory 
-        history={searchHistory}
-        onSelect={handleHistorySelect}
-        onClose={() => setShowHistory(false)}
-        isVisible={showHistory}
-      />
     </div>
   );
 };

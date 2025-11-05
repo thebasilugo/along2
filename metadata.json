@@ -1,6 +1,7 @@
+
 {
   "name": "Along",
-  "description": "Your guide to public transport in Nigeria. Get simple, step-by-step transit directions. Currently available in Abuja and Lagos.",
+  "description": "An application to help users find public transport routes in Nigeria — starting with Abuja, Lagos, and Port Harcourt — using their current location or a chosen state, and showing the best routes between their origin and destination.",
   "requestFramePermissions": [
     "geolocation"
   ]
