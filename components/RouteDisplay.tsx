@@ -1,38 +1,63 @@
 import React from 'react';
 
+// SVG icons for different transport modes
+const WalkIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+  </svg>
+);
+
+const BusIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path d="M12 18.35A6.35 6.35 0 0018.35 12 6.35 6.35 0 0012 5.65 6.35 6.35 0 005.65 12 6.35 6.35 0 0012 18.35z" />
+    <path d="M12 2v2m0 16v2m-8-9H2m8-8V2m8 8h2m-2 8l-2-2" />
+  </svg>
+);
+
+const DestinationIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+);
+
+
+const getIconForStep = (step: string) => {
+    const lowerCaseStep = step.toLowerCase();
+    if (lowerCaseStep.includes('walk') || lowerCaseStep.includes('cross')) {
+        return <WalkIcon />;
+    }
+    if (lowerCaseStep.includes('bus') || lowerCaseStep.includes('board') || lowerCaseStep.includes('take a') || lowerCaseStep.includes('keke')) {
+        return <BusIcon />;
+    }
+    if (lowerCaseStep.includes('arrive') || lowerCaseStep.includes('destination')) {
+        return <DestinationIcon />;
+    }
+    return <BusIcon />; // Default icon
+};
+
 interface RouteDisplayProps {
-  directions: string;
+  route: string;
 }
 
-const RouteDisplay: React.FC<RouteDisplayProps> = ({ directions }) => {
-  const formatDirections = (text: string) => {
-    return text
-      .split('\n')
-      .map((line) => {
-        // Remove markdown-like asterisks for simplicity and apply bold via class
-        line = line.replace(/\*/g, '');
-        // Check for numbered list items
-        if (/^\d+\.\s/.test(line.trim())) {
-          return `<li class="flex items-start mb-3">
-                    <span class="bg-blue-500 text-white rounded-full w-6 h-6 text-sm font-bold flex items-center justify-center mr-4 flex-shrink-0">${line.trim().split('.')[0]}</span>
-                    <span class="flex-1">${line.trim().substring(line.indexOf('.') + 1).trim()}</span>
-                  </li>`;
-        }
-        if (line.trim().length > 0) {
-           return `<p class="mb-3">${line}</p>`;
-        }
-        return '';
-      })
-      .join('');
-  };
+const RouteDisplay: React.FC<RouteDisplayProps> = ({ route }) => {
+  const steps = route.split('\n').filter(line => line.match(/^\d+\.\s/));
 
   return (
-    <div className="bg-white/70 backdrop-blur-xl p-6 md:p-8 rounded-2xl shadow-lg w-full animate-fade-in border border-gray-200/50">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6">Your Route</h2>
-      <ol
-        className="space-y-2 text-gray-700 text-base"
-        dangerouslySetInnerHTML={{ __html: formatDirections(directions) }}
-      />
+    <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+      <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Your Route</h2>
+      <div className="space-y-4">
+        {steps.map((step, index) => (
+          <div key={index} className="flex items-start p-4 bg-gray-100 dark:bg-gray-800/50 rounded-lg shadow-sm">
+            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-500 dark:bg-indigo-600 text-white flex items-center justify-center mr-4">
+              {getIconForStep(step)}
+            </div>
+            <p className="text-gray-700 dark:text-gray-300 self-center">
+              {step.substring(step.indexOf(' ') + 1)}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

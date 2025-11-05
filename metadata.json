@@ -1,7 +1,6 @@
-
 {
   "name": "Along",
-  "description": "An application to find public transport directions in Abuja and Lagos using your starting point and destination. Powered by Google AI.",
+  "description": "Your guide to public transport in Nigeria. Get simple, step-by-step transit directions. Currently available in Abuja and Lagos.",
   "requestFramePermissions": [
     "geolocation"
   ]
